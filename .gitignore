@@ -10,6 +10,9 @@ local.properties
 .idea/
 captures/
 
+# إعدادات محلية خاصة بالجهاز
+.claude/settings.local.json
+
 # نظام
 Thumbs.db
 .DS_Store
