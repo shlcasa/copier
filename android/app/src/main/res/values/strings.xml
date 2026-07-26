@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">لصق سريع</string>
+
+    <string name="accessibility_label">لصق سريع — اللصق التلقائي</string>
+    <string name="accessibility_description">كاتخلي التطبيق يلصق العبارة اللي ختاريتي مباشرة فخانة الكتابة اللي مفتوحة قدامك (واتساب، بحث، أي حقل). ما كايتسجل ولا كايتبعت حتى شي حاجة.</string>
+
+    <string name="channel_name">الزر العائم</string>
+    <string name="notif_title">الزر العائم خدام</string>
+    <string name="notif_text">دوس على الفقاعة باش تختار عبارة</string>
+    <string name="notif_stop">إيقاف</string>
+
+    <string name="panel_title">اختار عبارة</string>
+    <string name="panel_empty">ما كاين حتى عبارة. حل التطبيق وزيد شي وحدة.</string>
+    <string name="panel_edit">تعديل العبارات</string>
+    <string name="panel_hide">إخفاء الزر</string>
+
+    <string name="toast_pasted">تلصقات ✅</string>
+    <string name="toast_copied">تنسخات للحافظة</string>
+    <string name="toast_copied_manual">تنسخات — الصقها بيدك</string>
+
+    <string name="need_overlay">خاصك أولاً تسمح بالظهور فوق التطبيقات</string>
+    <string name="hint_find_service">قلب على «لصق سريع» فلائحة الخدمات المثبتة وشعلها</string>
+</resources>

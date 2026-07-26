@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.souheil.copier'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.souheil.copier"
+        // TYPE_APPLICATION_OVERLAY كايحتاج أندرويد 8.0 على الأقل
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // كانوقعو الـ release بمفاتيح الديبَگ باش يتثبت مباشرة بلا keystore
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}
+
+// المصدر الوحيد ديال الواجهة هو ../../www — كانساخوه ل assets قبل كل بناء.
+def webSrc = file("$rootDir/../www")
+def webDst = file("$projectDir/src/main/assets/www")
+
+tasks.register('copyWebAssets', Copy) {
+    from webSrc
+    into webDst
+    // sw.js كايخدم غير فنسخة الويب
+    exclude 'sw.js'
+}
+
+tasks.register('cleanWebAssets', Delete) {
+    delete webDst
+}
+
+tasks.named('preBuild').configure { dependsOn 'copyWebAssets' }
+tasks.named('clean').configure { dependsOn 'cleanWebAssets' }

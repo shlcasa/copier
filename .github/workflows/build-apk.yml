@@ -1,0 +1,53 @@
+name: بناء APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: تثبيت JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: تجهيز Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: بناء الـ APK
+        working-directory: android
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: تسمية الملف
+        run: cp android/app/build/outputs/apk/release/app-release.apk lasq-sari3.apk
+
+      # الـ artifact كايحتاج تسجيل الدخول باش تحملو — مفيد للأرشيف
+      - name: رفع كـ artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lasq-sari3-apk
+          path: lasq-sari3.apk
+
+      # الإصدار "latest" كايعطي لينك مباشر كاتحمل منو من الهاتف بلا تسجيل دخول
+      - name: تحديث الإصدار latest
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: آخر نسخة
+          body: |
+            حمّل `lasq-sari3.apk` من تحت وثبتو على الجوال.
+            بُني من الكوميت ${{ github.sha }}.
+          files: lasq-sari3.apk
+          prerelease: true

@@ -1,0 +1,15 @@
+# كايتولّد من ../www فكل بناء
+android/app/src/main/assets/www/
+
+# Gradle / Android
+.gradle/
+build/
+local.properties
+*.apk
+*.iml
+.idea/
+captures/
+
+# نظام
+Thumbs.db
+.DS_Store

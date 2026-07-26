@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem C:\\\\Users\\\\laghr\\\\Desktop\\\\copier -Force | Select-Object Name, Length; \"---NODE---\"; try { node -v } catch { \"no node\" }; \"---NPM---\"; try { npm -v } catch { \"no npm\" }; \"---JAVA---\"; try { java -version } catch { \"no java\" }; \"---ANDROID---\"; $env:ANDROID_HOME; $env:ANDROID_SDK_ROOT; if \\(Test-Path \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\"\\) { \"SDK found\" } else { \"no sdk\" }; \"---GIT---\"; try { git --version } catch { \"no git\" })"
+    ]
+  }
+}
