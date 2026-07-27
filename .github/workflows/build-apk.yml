@@ -28,7 +28,25 @@ jobs:
 
       - name: بناء الـ APK
         working-directory: android
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+
+      # سجلات الـ Actions محجوبة على غير المسجلين، ولكن ملخص المهمة عمومي.
+      # بلا هادشي ما كايبقى باين حتى «exit code 1».
+      - name: نشر الخطأ فالملخص العمومي
+        if: failure()
+        run: |
+          {
+            echo '## أخطاء البناء'
+            echo '```'
+            grep -E '^e: |^w: |FAILURE:|What went wrong|Caused by:|error:|ERROR:' build.log | head -n 80 || true
+            echo '```'
+            echo '## آخر 150 سطر'
+            echo '```'
+            tail -n 150 build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: تسمية الملف
         run: cp android/app/build/outputs/apk/release/app-release.apk lasq-sari3.apk
