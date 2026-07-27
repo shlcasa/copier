@@ -28,14 +28,42 @@ object Sharer {
             FileProvider.getUriForFile(c, "${c.packageName}.files", ImageStore.file(c, name))
         }
 
+        val intent = buildIntent(c, uris, group.caption)
+
+        if (openDirectly(c, intent)) return null
+
         return try {
             c.startActivity(
-                Intent.createChooser(buildIntent(c, uris, group.caption), c.getString(R.string.share_title))
+                Intent.createChooser(intent, c.getString(R.string.share_title))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
             null
         } catch (e: Exception) {
             c.getString(R.string.err_send_failed)
+        }
+    }
+
+    /**
+     * إلا كان المستخدم داخل شات واتساب مع رقم ماشي مسجل، كانفتحو **نفس الشات**
+     * والصور مرفقة، بلا لوحة اختيار.
+     *
+     * خاصية `jid` ماشي موثقة رسمياً من واتساب — ممكن تحبس فأي تحديث. لهذا أي فشل
+     * كايرجعنا للوحة المشاركة العادية بدل ما يوقف الميزة.
+     */
+    private fun openDirectly(c: Context, intent: Intent): Boolean {
+        val (pkg, phone) = PasteAccessibilityService.currentWhatsAppChat() ?: return false
+
+        val direct = Intent(intent)
+            .setPackage(pkg)
+            .putExtra("jid", "$phone@s.whatsapp.net")
+
+        if (direct.resolveActivity(c.packageManager) == null) return false
+
+        return try {
+            c.startActivity(direct)
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 

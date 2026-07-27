@@ -20,6 +20,10 @@
             <action android:name="android.intent.action.SEND_MULTIPLE" />
             <data android:mimeType="image/*" />
         </intent>
+        <!-- مطلوبين غير باش نفتحو نفس الشات مباشرة (setPackage + jid).
+             اللوحة كتبقى كتوري الكل عبر الاستعلامات فوق. -->
+        <package android:name="com.whatsapp.w4b" />
+        <package android:name="com.whatsapp" />
     </queries>
 
     <application
