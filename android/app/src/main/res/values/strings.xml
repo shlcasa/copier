@@ -28,7 +28,7 @@
     <string name="share_title">صيفط الصور بـ</string>
     <string name="err_group_missing">ما لقيناش هاد المجموعة</string>
     <string name="err_group_empty">هاد المجموعة خاوية — زيد ليها صور</string>
-    <string name="err_send_failed">ما قدرناش نفتحو واتساب</string>
+    <string name="err_send_failed">ما لقينا حتى تطبيق يقدر يصيفط الصور</string>
 
     <string name="importing">كانزيدو %1$d صورة...</string>
     <string name="imported">تزادو %1$d صورة</string>

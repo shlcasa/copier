@@ -232,7 +232,7 @@ function groupCard(g, index) {
   const send = document.createElement('button');
   send.className = 'btn send';
   const n = (g.images || []).length;
-  send.textContent = n ? 'صيفط ' + imgCount(n) + ' لواتساب' : 'زيد صور باش تصيفط';
+  send.textContent = n ? 'صيفط ' + imgCount(n) : 'زيد صور باش تصيفط';
   send.disabled = !n;
   send.addEventListener('click', () => Android.sendGroup(g.id));
   sendRow.appendChild(send);
