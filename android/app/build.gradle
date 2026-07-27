@@ -38,6 +38,10 @@ android {
 dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
+    // باش الواجهة تقدر تعرض الصور المخزنة داخلياً عبر https://appassets.androidplatform.net
+    implementation 'androidx.webkit:webkit:1.11.0'
+    // تصحيح دوران الصور الملتقطة بالكاميرا
+    implementation 'androidx.exifinterface:exifinterface:1.3.7'
 }
 
 // المصدر الوحيد ديال الواجهة هو ../../www — كانساخوه ل assets قبل كل بناء.

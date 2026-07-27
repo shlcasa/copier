@@ -36,6 +36,28 @@ class WebBridge(private val activity: Activity) {
     @JavascriptInterface
     fun savePhrases(json: String) = PhraseStore.save(activity, json)
 
+    /* -------- مجموعات الصور -------- */
+
+    @JavascriptInterface
+    fun loadGroups(): String = ImageStore.rawJson(activity)
+
+    @JavascriptInterface
+    fun saveGroups(json: String) = ImageStore.save(activity, json)
+
+    /** كايفتح منتقي الصور ديال النظام. النتيجة كترجع عبر window.reloadAll(). */
+    @JavascriptInterface
+    fun pickImages(groupId: String) = onMain {
+        (activity as? MainActivity)?.pickImagesFor(groupId)
+    }
+
+    /** كايفتح واتساب والصور مرفقة. */
+    @JavascriptInterface
+    fun sendGroup(groupId: String) = onMain {
+        Sharer.sendGroup(activity, groupId)?.let {
+            Toast.makeText(activity, it, Toast.LENGTH_LONG).show()
+        }
+    }
+
     /* -------- الحافظة -------- */
 
     @JavascriptInterface

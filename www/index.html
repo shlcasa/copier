@@ -22,6 +22,11 @@
   <button data-act="reset">استرجاع العبارات الافتراضية</button>
 </div>
 
+<nav class="tabs">
+  <button class="tab active" data-tab="phrases">عبارات</button>
+  <button class="tab" data-tab="images">صور</button>
+</nav>
+
 <main>
   <section id="setup" class="setup hidden">
     <h2>إعداد الزر العائم</h2>
@@ -33,17 +38,32 @@
     هنا الضغط على عبارة كاينسخها للحافظة وكتلصقها بيدك.
   </section>
 
-  <div class="searchwrap">
-    <input id="search" type="search" placeholder="بحث فالعبارات..." autocomplete="off">
-  </div>
+  <!-- ============ تبويبة العبارات ============ -->
+  <section id="view-phrases">
+    <div class="searchwrap">
+      <input id="search" type="search" placeholder="بحث فالعبارات..." autocomplete="off">
+    </div>
 
-  <ul id="list" class="list"></ul>
+    <ul id="list" class="list"></ul>
+    <p id="empty" class="empty hidden"></p>
+  </section>
 
-  <p id="empty" class="empty hidden">ما كاين حتى عبارة. زيد وحدة بالزر ديال <b>+</b>.</p>
+  <!-- ============ تبويبة الصور ============ -->
+  <section id="view-images" class="hidden">
+    <p id="images-webnote" class="webnote hidden">
+      مجموعات الصور كايخدمو غير فتطبيق الأندرويد — حيت كايحتاجو المعرض ديال الجوال وواتساب.
+    </p>
+
+    <ul id="groups" class="list"></ul>
+    <p id="groups-empty" class="empty hidden">
+      ما كاينة حتى مجموعة. صاوب وحدة بالزر ديال <b>+</b>،<br>سميها وزيد ليها الصور.
+    </p>
+  </section>
 </main>
 
-<button id="fab" class="fab" aria-label="إضافة عبارة">+</button>
+<button id="fab" class="fab" aria-label="إضافة">+</button>
 
+<!-- محرر العبارة -->
 <div id="editor" class="sheet hidden">
   <div class="sheet-card">
     <h2 id="editor-title">عبارة جديدة</h2>
@@ -51,6 +71,24 @@
     <div class="sheet-actions">
       <button id="editor-cancel" class="btn ghost">إلغاء</button>
       <button id="editor-save" class="btn primary">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- محرر المجموعة -->
+<div id="geditor" class="sheet hidden">
+  <div class="sheet-card">
+    <h2 id="geditor-title">مجموعة جديدة</h2>
+
+    <label class="field-label" for="geditor-name">اسم المجموعة</label>
+    <input id="geditor-name" type="text" placeholder="مثلاً: كتالوگ الصيف">
+
+    <label class="field-label" for="geditor-caption">تعليق مع الصور (اختياري)</label>
+    <textarea id="geditor-caption" rows="2" placeholder="كايمشي مع الصورة ملي تكون وحدة"></textarea>
+
+    <div class="sheet-actions">
+      <button id="geditor-cancel" class="btn ghost">إلغاء</button>
+      <button id="geditor-save" class="btn primary">حفظ</button>
     </div>
   </div>
 </div>

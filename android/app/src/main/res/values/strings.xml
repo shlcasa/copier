@@ -12,6 +12,27 @@
 
     <string name="panel_title">اختار عبارة</string>
     <string name="panel_empty">ما كاين حتى عبارة. حل التطبيق وزيد شي وحدة.</string>
+    <string name="panel_empty_images">ما كاينة حتى مجموعة فيها صور. حل التطبيق وصاوب وحدة.</string>
+
+    <string name="tab_phrases">عبارات</string>
+    <string name="tab_images">صور</string>
+    <string name="group_line">%1$s · %2$s</string>
+
+    <!-- ما كانستعملوش plurals حيت أندرويد كايختار القاعدة حسب لغة الجهاز،
+         وهاد التطبيق بالعربية حتى إلا كان الجهاز بالفرنسية ولا الإنجليزية. -->
+    <string name="count_one">صورة وحدة</string>
+    <string name="count_two">صورتين</string>
+    <string name="count_few">%1$d صور</string>
+    <string name="count_many">%1$d صورة</string>
+
+    <string name="share_title">صيفط الصور بـ</string>
+    <string name="err_group_missing">ما لقيناش هاد المجموعة</string>
+    <string name="err_group_empty">هاد المجموعة خاوية — زيد ليها صور</string>
+    <string name="err_send_failed">ما قدرناش نفتحو واتساب</string>
+
+    <string name="importing">كانزيدو %1$d صورة...</string>
+    <string name="imported">تزادو %1$d صورة</string>
+    <string name="imported_partial">تزادو %1$d من %2$d — بعض الصور ما تقراوش</string>
     <string name="panel_edit">تعديل العبارات</string>
     <string name="panel_hide">إخفاء الزر</string>
 

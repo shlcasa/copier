@@ -12,6 +12,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.Icon
@@ -23,6 +25,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -38,11 +42,14 @@ import kotlin.math.abs
  */
 class FloatingBubbleService : Service() {
 
+    private enum class Tab { PHRASES, IMAGES }
+
     companion object {
         const val ACTION_STOP = "com.souheil.copier.STOP_BUBBLE"
 
         private const val CHANNEL_ID = "bubble"
         private const val NOTIF_ID = 1
+        private const val BODY_ID = 0x7f5f0001
 
         @Volatile
         var isRunning = false
@@ -53,6 +60,9 @@ class FloatingBubbleService : Service() {
 
     private var bubble: View? = null
     private var panel: View? = null
+
+    /** كايبقى محفوظ بين فتحة وفتحة باش المستخدم ما يعاودش يختار كل مرة. */
+    private var currentTab = Tab.PHRASES
 
     private val phrasesChanged = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -188,8 +198,6 @@ class FloatingBubbleService : Service() {
     }
 
     private fun showPanel() {
-        val phrases = PhraseStore.texts(this)
-
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundResource(R.drawable.panel_bg)
@@ -197,19 +205,11 @@ class FloatingBubbleService : Service() {
             elevation = dp(12).toFloat()
         }
 
-        root.addView(header())
-
-        if (phrases.isEmpty()) {
-            root.addView(TextView(this).apply {
-                text = getString(R.string.panel_empty)
-                setTextColor(Color.parseColor("#9aa2b1"))
-                textSize = 14f
-                setPadding(dp(6), dp(18), dp(6), dp(18))
-            })
-        } else {
-            root.addView(phraseList(phrases))
-        }
-
+        root.addView(tabs())
+        root.addView(FrameLayout(this).also { body ->
+            body.id = BODY_ID
+            fillBody(body)
+        })
         root.addView(footer())
 
         val params = WindowManager.LayoutParams(
@@ -236,11 +236,65 @@ class FloatingBubbleService : Service() {
         panel = null
     }
 
-    private fun header() = TextView(this).apply {
-        text = getString(R.string.panel_title)
+    /* ---------------- التبويبات ---------------- */
+
+    private fun tabs(): View {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 0, 0, dp(10))
+        }
+        row.addView(tab(getString(R.string.tab_phrases), Tab.PHRASES))
+        row.addView(tab(getString(R.string.tab_images), Tab.IMAGES))
+        return row
+    }
+
+    private fun tab(label: String, which: Tab) = TextView(this).apply {
+        text = label
+        textSize = 14f
+        gravity = Gravity.CENTER
+        setPadding(dp(10), dp(9), dp(10), dp(9))
+        isClickable = true
+
+        val active = which == currentTab
+        setTextColor(Color.parseColor(if (active) "#ffffff" else "#9aa2b1"))
+        setBackgroundResource(if (active) R.drawable.tab_active_bg else R.drawable.item_bg)
+
+        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            .apply { marginStart = dp(3); marginEnd = dp(3) }
+
+        setOnClickListener {
+            if (currentTab == which) return@setOnClickListener
+            currentTab = which
+            // أبسط طريقة نعاودو نبنيو التبويبات والمحتوى بحالة صحيحة
+            hidePanel()
+            showPanel()
+        }
+    }
+
+    /** كايعمر جسم اللوحة حسب التبويبة المختارة. */
+    private fun fillBody(body: FrameLayout) {
+        body.removeAllViews()
+
+        val content: View = when (currentTab) {
+            Tab.PHRASES -> {
+                val phrases = PhraseStore.texts(this)
+                if (phrases.isEmpty()) emptyNote(R.string.panel_empty) else phraseList(phrases)
+            }
+
+            Tab.IMAGES -> {
+                val groups = ImageStore.groups(this).filter { it.images.isNotEmpty() }
+                if (groups.isEmpty()) emptyNote(R.string.panel_empty_images) else groupList(groups)
+            }
+        }
+
+        body.addView(content)
+    }
+
+    private fun emptyNote(res: Int) = TextView(this).apply {
+        text = getString(res)
         setTextColor(Color.parseColor("#9aa2b1"))
-        textSize = 13f
-        setPadding(dp(6), 0, dp(6), dp(10))
+        textSize = 14f
+        setPadding(dp(6), dp(18), dp(6), dp(18))
     }
 
     private fun phraseList(phrases: List<String>): View {
@@ -258,6 +312,88 @@ class FloatingBubbleService : Service() {
                 else ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
+    }
+
+    /* ---------------- مجموعات الصور ---------------- */
+
+    private fun groupList(groups: List<Group>): View {
+        val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        groups.forEach { column.addView(groupItem(it)) }
+
+        return ScrollView(this).apply {
+            addView(column)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                if (groups.size > 4) (screenHeight() * 0.5).toInt()
+                else ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+
+    private fun groupItem(group: Group): View {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(10), dp(10), dp(10), dp(10))
+            setBackgroundResource(R.drawable.item_bg)
+            isClickable = true
+
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(6) }
+
+            setOnClickListener { sendGroup(group) }
+        }
+
+        // شي صور مصغرة باش يعرف المستخدم شنو غادي يمشي
+        val strip = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        group.images.take(3).forEach { name ->
+            thumbnail(name)?.let { strip.addView(it) }
+        }
+        row.addView(strip)
+
+        row.addView(TextView(this).apply {
+            text = getString(R.string.group_line, group.name, imagesCount(group.images.size))
+            setTextColor(Color.WHITE)
+            textSize = 15f
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
+            textDirection = View.TEXT_DIRECTION_LOCALE
+            setPadding(dp(10), 0, dp(4), 0)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+
+        return row
+    }
+
+    private fun thumbnail(name: String): View? {
+        val size = dp(38)
+        val bmp = decodeThumb(name, size) ?: return null
+
+        return ImageView(this).apply {
+            setImageBitmap(bmp)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = dp(4) }
+        }
+    }
+
+    private fun decodeThumb(name: String, target: Int): Bitmap? {
+        val f = ImageStore.file(this, name)
+        if (!f.exists()) return null
+
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(f.path, bounds)
+
+        val opts = BitmapFactory.Options().apply {
+            inSampleSize = maxOf(1, minOf(bounds.outWidth / target, bounds.outHeight / target))
+        }
+        return BitmapFactory.decodeFile(f.path, opts)
+    }
+
+    private fun sendGroup(group: Group) {
+        hidePanel()
+        Sharer.sendGroup(this, group.id)?.let { toast(it) }
     }
 
     private fun phraseItem(text: String) = TextView(this).apply {
@@ -381,6 +517,14 @@ class FloatingBubbleService : Service() {
     }
 
     /* ---------------- أدوات ---------------- */
+
+    /** الجمع فالعربية: 3 صور، ولكن 15 صورة. */
+    private fun imagesCount(n: Int): String = when {
+        n == 1 -> getString(R.string.count_one)
+        n == 2 -> getString(R.string.count_two)
+        n <= 10 -> getString(R.string.count_few, n)
+        else -> getString(R.string.count_many, n)
+    }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     private fun screenWidth() = resources.displayMetrics.widthPixels

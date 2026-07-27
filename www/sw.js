@@ -24,9 +24,23 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+/*
+ * الشبكة أولاً، والكاش غير ملي تكون الشبكة مقطوعة.
+ * الكاش أولاً كان كايخلي المستخدمين محبوسين فنسخة قديمة حتى نبدلو اسم الكاش.
+ */
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).origin !== location.origin) return;
+
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request).catch(() => caches.match('./index.html')))
+    fetch(e.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      })
+      .catch(() =>
+        caches.match(e.request).then((hit) => hit || caches.match('./index.html'))
+      )
   );
 });
