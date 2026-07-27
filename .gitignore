@@ -4,7 +4,9 @@ android/app/src/main/assets/www/
 # Gradle / Android
 .gradle/
 build/
+# مسار SDK خاص بكل جهاز — ما تتبعوش
 local.properties
+android/local.properties
 *.apk
 *.iml
 .idea/

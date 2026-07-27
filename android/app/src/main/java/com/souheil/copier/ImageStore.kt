@@ -87,35 +87,37 @@ object ImageStore {
     /* ---------------- استيراد الصور ---------------- */
 
     /** كاينسخ الصورة لداخل التطبيق بعد ما يصغّرها ويصحح الدوران. كايرجع اسم الملف. */
-    fun importImage(c: Context, uri: Uri): String? = try {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        c.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    fun importImage(c: Context, uri: Uri): String? {
+        return try {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            c.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
 
-        val opts = BitmapFactory.Options().apply {
-            inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight)
+            val opts = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight)
+            }
+            var bmp = c.contentResolver.openInputStream(uri)
+                ?.use { BitmapFactory.decodeStream(it, null, opts) }
+                ?: return null
+
+            val rotation = c.contentResolver.openInputStream(uri)
+                ?.use { ExifInterface(it).rotationDegrees } ?: 0
+
+            if (rotation != 0) {
+                val rotated = Bitmap.createBitmap(
+                    bmp, 0, 0, bmp.width, bmp.height,
+                    Matrix().apply { postRotate(rotation.toFloat()) }, true
+                )
+                if (rotated != bmp) bmp.recycle()
+                bmp = rotated
+            }
+
+            val name = "${UUID.randomUUID()}.jpg"
+            FileOutputStream(file(c, name)).use { bmp.compress(Bitmap.CompressFormat.JPEG, QUALITY, it) }
+            bmp.recycle()
+            name
+        } catch (e: Exception) {
+            null
         }
-        var bmp = c.contentResolver.openInputStream(uri)
-            ?.use { BitmapFactory.decodeStream(it, null, opts) }
-            ?: return null
-
-        val rotation = c.contentResolver.openInputStream(uri)
-            ?.use { ExifInterface(it).rotationDegrees } ?: 0
-
-        if (rotation != 0) {
-            val rotated = Bitmap.createBitmap(
-                bmp, 0, 0, bmp.width, bmp.height,
-                Matrix().apply { postRotate(rotation.toFloat()) }, true
-            )
-            if (rotated != bmp) bmp.recycle()
-            bmp = rotated
-        }
-
-        val name = "${UUID.randomUUID()}.jpg"
-        FileOutputStream(file(c, name)).use { bmp.compress(Bitmap.CompressFormat.JPEG, QUALITY, it) }
-        bmp.recycle()
-        name
-    } catch (e: Exception) {
-        null
     }
 
     private fun sampleSize(w: Int, h: Int): Int {
