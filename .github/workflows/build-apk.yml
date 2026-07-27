@@ -32,19 +32,23 @@ jobs:
           set -o pipefail
           gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
-      # سجلات الـ Actions محجوبة على غير المسجلين، ولكن ملخص المهمة عمومي.
-      # بلا هادشي ما كايبقى باين حتى «exit code 1».
-      - name: نشر الخطأ فالملخص العمومي
+      # السجلات والملخصات بجوج محجوبين على غير المسجلين. الملاحظات (annotations)
+      # هي القناة الوحيدة اللي كاتبان بلا تسجيل دخول، لهذا كانمررو الخطأ منها.
+      - name: نشر الخطأ كملاحظة عمومية
         if: failure()
         run: |
+          msg=$(grep -E '^e: |FAILURE:|What went wrong|Caused by:|error:|ERROR:' build.log | head -n 40)
+          [ -z "$msg" ] && msg=$(tail -n 40 build.log)
+          msg="${msg//'%'/%25}"
+          msg="${msg//$'\r'/}"
+          msg="${msg//$'\n'/%0A}"
+          echo "::error title=تفاصيل خطأ البناء::$msg"
+
+          # ونزيدو نسخة كاملة فالملخص للمسجلين
           {
-            echo '## أخطاء البناء'
+            echo '## سجل البناء'
             echo '```'
-            grep -E '^e: |^w: |FAILURE:|What went wrong|Caused by:|error:|ERROR:' build.log | head -n 80 || true
-            echo '```'
-            echo '## آخر 150 سطر'
-            echo '```'
-            tail -n 150 build.log
+            tail -n 200 build.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
