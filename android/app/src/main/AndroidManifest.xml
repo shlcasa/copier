@@ -9,6 +9,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- اختياري: باش نلقاو رقم الزبون المسجل انطلاقاً من اسمو اللي كايبان
+         فرأس الشات. القراءة كتوقع فالجهاز وما كايخرج حتى شي معطى. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <!-- كل تطبيق كايقبل الصور: واتساب، واتساب بزنس، انستغرام، ميسنجر، وغيرهم.
          ما كانسميو حتى تطبيق باش ما نحجبوش الباقي. -->
     <queries>

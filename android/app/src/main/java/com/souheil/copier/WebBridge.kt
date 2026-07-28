@@ -85,6 +85,18 @@ class WebBridge(private val activity: Activity) {
     fun hasAccessibility(): Boolean = Perms.accessibilityEnabled(activity)
 
     @JavascriptInterface
+    fun hasContacts(): Boolean = Contacts.hasPermission(activity)
+
+    @JavascriptInterface
+    fun requestContacts() = onMain {
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.READ_CONTACTS),
+            43
+        )
+    }
+
+    @JavascriptInterface
     fun openAccessibility() = onMain {
         Toast.makeText(activity, R.string.hint_find_service, Toast.LENGTH_LONG).show()
         activity.startActivity(Perms.accessibilitySettingsIntent())

@@ -363,6 +363,15 @@ body {
 
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.ghost { background: var(--surface-2); color: var(--text); }
+.btn.danger { background: var(--danger); color: #2a0409; }
+
+.confirm-text {
+  margin: 0 0 4px;
+  padding: 6px 2px;
+  font-size: 17px;
+  line-height: 1.6;
+  word-break: break-word;
+}
 
 .btn.small {
   flex: none;

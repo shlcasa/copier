@@ -75,7 +75,13 @@ class PasteAccessibilityService : AccessibilityService() {
         // 1) العنصر الرسمي ديال اسم/رقم المحادثة
         root.findAccessibilityNodeInfosByViewId("$pkg:id/conversation_contact_name")
             .forEach { node ->
-                phoneDigits(node.text?.toString())?.let { return pkg to it }
+                val header = node.text?.toString() ?: return@forEach
+
+                // رقم ماشي مسجل — كايبان كيما هو
+                phoneDigits(header)?.let { return pkg to it }
+
+                // زبون مسجل — كايبان اسمو، كانقلبو على الرقم فجهات الاتصال
+                Contacts.phoneForName(this, header)?.let { return pkg to it }
             }
 
         // 2) احتياطي إلا تبدل معرّف العنصر: أي رقم دولي فأعلى الشاشة.

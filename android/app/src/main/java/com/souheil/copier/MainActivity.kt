@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -69,6 +70,10 @@ class MainActivity : AppCompatActivity() {
             settings.domStorageEnabled = true
             settings.textZoom = 100
             addJavascriptInterface(WebBridge(this@MainActivity), "Android")
+
+            // بلا WebChromeClient، أي alert/confirm/prompt كايتجاهل بصمت
+            // (confirm كايرجع false) — وهادشي كان كايخلي الحذف ما يوقعش.
+            webChromeClient = WebChromeClient()
 
             webViewClient = object : WebViewClientCompat() {
                 override fun shouldInterceptRequest(

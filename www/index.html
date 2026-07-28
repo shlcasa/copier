@@ -93,6 +93,18 @@
   </div>
 </div>
 
+<!-- تأكيد الحذف. ماشي confirm() ديال المتصفح حيت هادا كايرجع false
+     مباشرة داخل WebView وكايخلي الحذف ما يوقعش أصلاً. -->
+<div id="confirm" class="sheet hidden">
+  <div class="sheet-card">
+    <p id="confirm-text" class="confirm-text"></p>
+    <div class="sheet-actions">
+      <button id="confirm-no" class="btn ghost">لا</button>
+      <button id="confirm-yes" class="btn danger">حذف</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 <input id="file" type="file" accept="application/json" hidden>
 

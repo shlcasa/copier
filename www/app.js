@@ -176,8 +176,30 @@ function move(arr, i, dir, after) {
   after();
 }
 
-function remove(id) {
-  if (!confirm('تحذف هاد العبارة؟')) return;
+/**
+ * نافذة تأكيد ديالنا. `confirm()` ديال المتصفح كايرجع false مباشرة داخل WebView
+ * بلا ما يوري والو، وهادشي كان كايخلي الحذف ما يوقعش.
+ */
+let confirmResolve = null;
+
+function ask(message) {
+  $('confirm-text').textContent = message;
+  $('confirm').classList.remove('hidden');
+  return new Promise((resolve) => {
+    confirmResolve = resolve;
+  });
+}
+
+function closeConfirm(answer) {
+  $('confirm').classList.add('hidden');
+  if (confirmResolve) {
+    confirmResolve(answer);
+    confirmResolve = null;
+  }
+}
+
+async function remove(id) {
+  if (!(await ask('تحذف هاد العبارة؟'))) return;
   phrases = phrases.filter((p) => p.id !== id);
   persist();
   toast('تحذفات');
@@ -283,18 +305,18 @@ function thumbsFor(g) {
   return strip;
 }
 
-function removeImage(groupId, name) {
-  if (!confirm('تحذف هاد الصورة من المجموعة؟')) return;
+async function removeImage(groupId, name) {
+  if (!(await ask('تحذف هاد الصورة من المجموعة؟'))) return;
   const g = groups.find((x) => x.id === groupId);
   if (!g) return;
   g.images = (g.images || []).filter((n) => n !== name);
   persistGroups();
 }
 
-function removeGroup(id) {
+async function removeGroup(id) {
   const g = groups.find((x) => x.id === id);
   if (!g) return;
-  if (!confirm('تحذف مجموعة «' + g.name + '» بالصور ديالها؟')) return;
+  if (!(await ask('تحذف مجموعة «' + g.name + '» بالصور ديالها؟'))) return;
   groups = groups.filter((x) => x.id !== id);
   persistGroups();
   toast('تحذفات');
@@ -435,6 +457,14 @@ function renderSetup() {
     () => Android.openAccessibility()
   );
 
+  addStep(
+    steps,
+    'جهات الاتصال (اختياري) — للزبناء المسجلين',
+    Android.hasContacts(),
+    'سماح',
+    () => Android.requestContacts()
+  );
+
   addStep(steps, running ? 'الزر العائم خدام' : 'الزر العائم مطفي', running, running ? 'إطفاء' : 'تشغيل', () => {
     if (running) Android.stopBubble();
     else Android.startBubble();
@@ -526,15 +556,21 @@ $('btn-menu').addEventListener('click', (e) => {
 
 document.addEventListener('click', () => menuEl.classList.add('hidden'));
 
-menuEl.addEventListener('click', (e) => {
+menuEl.addEventListener('click', async (e) => {
   const act = e.target.dataset.act;
   if (act === 'export') exportPhrases();
   if (act === 'import') $('file').click();
-  if (act === 'reset' && confirm('ترجع للعبارات الافتراضية؟ غادي تمسح لي عندك.')) {
+  if (act === 'reset' && (await ask('ترجع للعبارات الافتراضية؟ غادي تمسح لي عندك.'))) {
     phrases = DEFAULTS.map(newPhrase);
     persist();
     toast('ترجعو للافتراضي');
   }
+});
+
+$('confirm-yes').addEventListener('click', () => closeConfirm(true));
+$('confirm-no').addEventListener('click', () => closeConfirm(false));
+$('confirm').addEventListener('click', (e) => {
+  if (e.target === $('confirm')) closeConfirm(false);
 });
 
 $('file').addEventListener('change', (e) => {
