@@ -280,25 +280,31 @@ function thumbsFor(g) {
   strip.className = 'thumbs';
 
   (g.images || []).forEach((name) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.title = 'دوس باش تحذف هاد الصورة';
+    const cell = document.createElement('div');
+    cell.className = 'thumb';
 
     const img = document.createElement('img');
     img.src = IMG_BASE + name;
     img.alt = '';
     img.loading = 'lazy';
-    b.appendChild(img);
+    cell.appendChild(img);
 
-    b.addEventListener('click', () => removeImage(g.id, name));
-    strip.appendChild(b);
+    // الحذف غير من العلامة، ماشي من الصورة كاملة — باش ما تتحذفش بالغلط
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'thumb-del';
+    del.textContent = '✕';
+    del.setAttribute('aria-label', 'حذف هاد الصورة');
+    del.addEventListener('click', () => removeImage(g.id, name));
+    cell.appendChild(del);
+
+    strip.appendChild(cell);
   });
 
   const add = document.createElement('button');
   add.type = 'button';
-  add.className = 'add';
-  add.textContent = '+';
-  add.title = 'زيد صور';
+  add.className = 'thumb-add';
+  add.innerHTML = '<span>+</span>زيد';
   add.addEventListener('click', () => Android.pickImages(g.id));
   strip.appendChild(add);
 
