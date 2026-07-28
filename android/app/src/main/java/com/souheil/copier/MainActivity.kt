@@ -60,6 +60,42 @@ class MainActivity : AppCompatActivity() {
             importInBackground(groupId, uris)
         }
 
+    private val exporter =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            val target = uri ?: return@registerForActivityResult
+            io.execute {
+                val ok = runCatching {
+                    contentResolver.openOutputStream(target)?.use { Backup.write(this, it) } ?: error("no stream")
+                }.isSuccess
+
+                runOnUiThread {
+                    Toast.makeText(
+                        this,
+                        getString(if (ok) R.string.backup_saved else R.string.backup_failed),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+
+    private val importer =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            val source = uri ?: return@registerForActivityResult
+            io.execute {
+                val result = runCatching {
+                    contentResolver.openInputStream(source)?.use { Backup.read(this, it) }
+                }.getOrNull()
+
+                runOnUiThread {
+                    val msg = if (result == null) getString(R.string.restore_failed)
+                    else getString(R.string.restored, result.first, result.second)
+
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                    refreshUi()
+                }
+            }
+        }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,6 +169,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun saveBackup() = exporter.launch("lasq-sari3-backup.zip")
+
+    fun loadBackup() = importer.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
 
     fun refreshUi() {
         web.evaluateJavascript("window.reloadAll && window.reloadAll();", null)

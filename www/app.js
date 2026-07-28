@@ -564,8 +564,17 @@ document.addEventListener('click', () => menuEl.classList.add('hidden'));
 
 menuEl.addEventListener('click', async (e) => {
   const act = e.target.dataset.act;
-  if (act === 'export') exportPhrases();
-  if (act === 'import') $('file').click();
+
+  // فالتطبيق النسخة الاحتياطية كتشمل الصور حتى هي، فنسخة الويب غير العبارات
+  if (act === 'backup') NATIVE ? Android.exportBackup() : exportPhrases();
+
+  if (act === 'restore') {
+    if (!NATIVE) return $('file').click();
+    if (await ask('الاسترجاع غادي يعوض العبارات والمجموعات اللي عندك دابا. نكملو؟')) {
+      Android.importBackup();
+    }
+  }
+
   if (act === 'reset' && (await ask('ترجع للعبارات الافتراضية؟ غادي تمسح لي عندك.'))) {
     phrases = DEFAULTS.map(newPhrase);
     persist();

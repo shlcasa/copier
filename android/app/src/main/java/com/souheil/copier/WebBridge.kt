@@ -50,13 +50,21 @@ class WebBridge(private val activity: Activity) {
         (activity as? MainActivity)?.pickImagesFor(groupId)
     }
 
-    /** كايفتح واتساب والصور مرفقة. */
+    /** كايفتح لوحة المشاركة والصور مرفقة. */
     @JavascriptInterface
     fun sendGroup(groupId: String) = onMain {
         Sharer.sendGroup(activity, groupId)?.let {
             Toast.makeText(activity, it, Toast.LENGTH_LONG).show()
         }
     }
+
+    /* -------- النسخة الاحتياطية -------- */
+
+    @JavascriptInterface
+    fun exportBackup() = onMain { (activity as? MainActivity)?.saveBackup() }
+
+    @JavascriptInterface
+    fun importBackup() = onMain { (activity as? MainActivity)?.loadBackup() }
 
     /* -------- الحافظة -------- */
 
