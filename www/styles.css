@@ -180,9 +180,20 @@ body {
   border-radius: 10px;
   overflow: hidden;
   background: var(--bg);
+  /* بلا هادشي الضغط المطول كايفتح قائمة النسخ ديال أندرويد وكايقطع السحب */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* الصورة ما كتستقبلش اللمس باش الهدف يبقى دايماً الخانة */
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
 
 .thumb-del {
   position: absolute;

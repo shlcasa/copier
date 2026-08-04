@@ -333,45 +333,57 @@ function enableThumbGestures(strip, group) {
   let cell = null;
   let timer = null;
   let startX = 0;
+  let startY = 0;
   let dragging = false;
 
-  const cancelTimer = () => {
+  const clear = () => {
     clearTimeout(timer);
     timer = null;
   };
 
-  strip.addEventListener('pointerdown', (e) => {
-    const target = e.target.closest('.thumb');
-    if (!target || e.target.closest('.thumb-del')) return;
+  const reset = () => {
+    clear();
+    if (cell) cell.classList.remove('dragging');
+    cell = null;
+    dragging = false;
+  };
+
+  function begin(target, x, y) {
+    if (!target || cell) return;
 
     cell = target;
-    startX = e.clientX;
+    startX = x;
+    startY = y;
     dragging = false;
 
     timer = setTimeout(() => {
       dragging = true;
       cell.classList.add('dragging');
-      // بلا هادشي الشريط كايتزحلق بدل ما الصورة تتسحب
-      strip.style.touchAction = 'none';
-      strip.setPointerCapture(e.pointerId);
       if (navigator.vibrate) navigator.vibrate(25);
     }, LONG_PRESS_MS);
-  });
+  }
 
-  strip.addEventListener('pointermove', (e) => {
+  /**
+   * كانمنعو التزحلاق بـ preventDefault على touchmove وماشي بـ touch-action:
+   * أندرويد كايقرر نوع الحركة فبداية اللمس وما كايرجعش فقراره، فتبديل
+   * touch-action من بعد ما تبدا الحركة ما كايديرش والو.
+   */
+  function move(x, y, event) {
     if (!cell) return;
 
     if (!dragging) {
-      if (Math.abs(e.clientX - startX) > MOVE_SLOP) cancelTimer();
+      // تحرك الصبع قبل الضغطة المطولة = تزحلاق عادي، ماشي ضغطة ولا سحب.
+      // خاصنا نلغيو الحركة كاملة بلا ما نحلو المعاينة عند رفع الصبع.
+      if (Math.abs(x - startX) > MOVE_SLOP || Math.abs(y - startY) > MOVE_SLOP) reset();
       return;
     }
 
-    e.preventDefault();
+    if (event.cancelable) event.preventDefault();
 
     const other = [...strip.querySelectorAll('.thumb')].find((c) => {
       if (c === cell) return false;
       const r = c.getBoundingClientRect();
-      return e.clientX >= r.left && e.clientX <= r.right;
+      return x >= r.left && x <= r.right;
     });
 
     if (!other) return;
@@ -380,15 +392,14 @@ function enableThumbGestures(strip, group) {
     const cells = [...strip.querySelectorAll('.thumb')];
     if (cells.indexOf(cell) < cells.indexOf(other)) other.after(cell);
     else other.before(cell);
-  });
+  }
 
-  const finish = () => {
-    cancelTimer();
+  function finish() {
+    clear();
     if (!cell) return;
 
     if (dragging) {
       cell.classList.remove('dragging');
-      strip.style.touchAction = '';
 
       const order = [...strip.querySelectorAll('.thumb')].map((c) => c.dataset.name);
       const changed = order.join() !== (group.images || []).join();
@@ -404,22 +415,42 @@ function enableThumbGestures(strip, group) {
       return;
     }
 
-    // ضغطة خفيفة
     const name = cell.dataset.name;
     cell = null;
     openViewer(group.id, name);
-  };
+  }
 
-  strip.addEventListener('pointerup', finish);
-  strip.addEventListener('pointercancel', () => {
-    cancelTimer();
-    if (dragging) {
-      cell.classList.remove('dragging');
-      strip.style.touchAction = '';
-    }
-    cell = null;
-    dragging = false;
-  });
+  const thumbAt = (target) =>
+    target.closest('.thumb-del') ? null : target.closest('.thumb');
+
+  strip.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches.length !== 1) return reset();
+      const t = e.touches[0];
+      begin(thumbAt(e.target), t.clientX, t.clientY);
+    },
+    { passive: true }
+  );
+
+  // passive: false ضروري باش preventDefault يخدم
+  strip.addEventListener(
+    'touchmove',
+    (e) => {
+      const t = e.touches[0];
+      if (t) move(t.clientX, t.clientY, e);
+    },
+    { passive: false }
+  );
+
+  strip.addEventListener('touchend', finish);
+  strip.addEventListener('touchcancel', reset);
+
+  // الفأرة — للمعاينة على الحاسوب
+  strip.addEventListener('mousedown', (e) => begin(thumbAt(e.target), e.clientX, e.clientY));
+  strip.addEventListener('mousemove', (e) => move(e.clientX, e.clientY, e));
+  strip.addEventListener('mouseup', finish);
+  strip.addEventListener('mouseleave', reset);
 }
 
 /* ---------------- معاينة الصورة ---------------- */
