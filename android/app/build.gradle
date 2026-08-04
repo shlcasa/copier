@@ -7,21 +7,39 @@ android {
     namespace 'com.souheil.copier'
     compileSdk 34
 
+    /*
+     * مفتاح ثابت مخزن فالمستودع.
+     *
+     * قبل هادشي كنا كانستعملو مفتاح الديبَگ، وهادا كايتصاوب تلقائياً وحدو ملي ما يكونش
+     * موجود — يعني كل سيرفر ديال GitHub كان كايوقّع بمفتاح مختلف، والتحديث كايفشل
+     * وكاتضيع البيانات. المفتاح الثابت كايسد هاد الباب نهائياً.
+     *
+     * المستودع عمومي فالمفتاح مقروء للجميع. مقبول لتطبيق شخصي كايتثبت يدوياً،
+     * ولكن ماشي صالح لنشر ف Google Play.
+     */
+    signingConfigs {
+        release {
+            storeFile file('../keystore/copier.jks')
+            storePassword 'copier'
+            keyAlias 'copier'
+            keyPassword 'copier'
+        }
+    }
+
     defaultConfig {
         applicationId "com.souheil.copier"
         // TYPE_APPLICATION_OVERLAY كايحتاج أندرويد 8.0 على الأقل
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // كانوقعو الـ release بمفاتيح الديبَگ باش يتثبت مباشرة بلا keystore
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 

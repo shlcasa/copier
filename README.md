@@ -51,6 +51,26 @@ git init && git add -A && git commit -m "أول نسخة"
 git remote add origin https://github.com/USERNAME/copier.git && git branch -M main && git push -u origin main
 ```
 
+## التوقيع
+
+الـ APK كايتوقّع بمفتاح ثابت مخزن ف [android/keystore/copier.jks](android/keystore/copier.jks)
+(كلمة السر `copier`، الاسم المستعار `copier`).
+
+**علاش ثابت:** أول نسخة كانت كتستعمل مفتاح الديبَگ، وهادا كايتصاوب تلقائياً ملي ما يكونش
+موجود — يعني كل سيرفر ديال GitHub كان كايوقّع بمفتاح مختلف، والتحديث كايفشل بـ
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` وكاتضيع بيانات المستخدم.
+
+المفتاح مخزن فالمستودع العمومي، يعني مقروء للجميع. مقبول لتطبيق شخصي كايتثبت يدوياً،
+**ماشي صالح** لنشر ف Google Play.
+
+للتحقق من أن البصمة ما تبدلاتش:
+
+```bash
+apksigner verify --print-certs app-release.apk
+```
+
+خاصها تكون `14b5915b78bd1cdd59ba7c43496b66ce68adeecfd11b09ce0916f1b79cdd676f`.
+
 ## 2. تحميل الـ APK
 
 كل دفعة (push) ل `main` كاتشعل البناء تلقائياً. من بعد ~5 دقائق:
