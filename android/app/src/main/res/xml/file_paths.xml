@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- غير مجلد الصور كايتشارك، والو آخر -->
+    <!-- غير الصور والنسخ الاحتياطية كايتشاركو، والو آخر -->
     <files-path name="images" path="images/" />
+    <cache-path name="backups" path="backup/" />
 </paths>

@@ -3,6 +3,7 @@ package com.souheil.copier
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -19,6 +20,19 @@ object Backup {
 
     private const val DATA = "data.json"
     private const val IMAGES = "images/"
+
+    /**
+     * كايكتب النسخة ف ملف مؤقت جاهز للمشاركة — باش المستخدم يقدر يصيفطها لراسو
+     * (واتساب، Drive، إيميل) ويحملها من الحاسوب.
+     */
+    fun buildFile(c: Context): File? = try {
+        val dir = File(c.cacheDir, "backup").apply { mkdirs() }
+        val file = File(dir, "lasq-sari3-backup.zip")
+        file.outputStream().use { write(c, it) }
+        file
+    } catch (e: Exception) {
+        null
+    }
 
     fun write(c: Context, out: OutputStream) {
         ZipOutputStream(out).use { zip ->

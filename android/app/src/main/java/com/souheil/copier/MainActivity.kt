@@ -14,6 +14,7 @@ import android.webkit.WebView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import java.util.concurrent.Executors
@@ -171,6 +172,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun saveBackup() = exporter.launch("lasq-sari3-backup.zip")
+
+    /** كايصيفط ملف النسخة الاحتياطية — أسهل طريقة توصلو للحاسوب. */
+    fun shareBackup() {
+        io.execute {
+            val file = Backup.buildFile(this)
+
+            runOnUiThread {
+                if (file == null) {
+                    Toast.makeText(this, R.string.backup_failed, Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+
+                val uri = FileProvider.getUriForFile(this, "$packageName.files", file)
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/zip"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+
+                runCatching {
+                    startActivity(Intent.createChooser(send, getString(R.string.backup_share_title)))
+                }.onFailure {
+                    Toast.makeText(this, R.string.backup_failed, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     fun loadBackup() = importer.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
 

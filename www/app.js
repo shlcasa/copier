@@ -762,6 +762,11 @@ menuEl.addEventListener('click', async (e) => {
   // فالتطبيق النسخة الاحتياطية كتشمل الصور حتى هي، فنسخة الويب غير العبارات
   if (act === 'backup') NATIVE ? Android.exportBackup() : exportPhrases();
 
+  if (act === 'share') {
+    if (NATIVE) Android.shareBackup();
+    else toast('المشاركة كتخدم غير فالتطبيق');
+  }
+
   if (act === 'restore') {
     if (!NATIVE) return $('file').click();
     if (await ask('الاسترجاع غادي يعوض العبارات والمجموعات اللي عندك دابا. نكملو؟')) {

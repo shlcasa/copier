@@ -64,6 +64,9 @@ class WebBridge(private val activity: Activity) {
     fun exportBackup() = onMain { (activity as? MainActivity)?.saveBackup() }
 
     @JavascriptInterface
+    fun shareBackup() = onMain { (activity as? MainActivity)?.shareBackup() }
+
+    @JavascriptInterface
     fun importBackup() = onMain { (activity as? MainActivity)?.loadBackup() }
 
     /* -------- الحافظة -------- */
