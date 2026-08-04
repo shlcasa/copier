@@ -249,6 +249,13 @@ function groupCard(g, index) {
 
   li.appendChild(thumbsFor(g));
 
+  if ((g.images || []).length) {
+    const hint = document.createElement('div');
+    hint.className = 'thumbs-hint';
+    hint.textContent = 'دوس على صورة باش تكبّرها · دوس مطوّل وجرّها باش تبدّل الترتيب';
+    li.appendChild(hint);
+  }
+
   const sendRow = document.createElement('div');
   sendRow.className = 'send-row';
   const send = document.createElement('button');
@@ -282,11 +289,13 @@ function thumbsFor(g) {
   (g.images || []).forEach((name) => {
     const cell = document.createElement('div');
     cell.className = 'thumb';
+    cell.dataset.name = name;
 
     const img = document.createElement('img');
     img.src = IMG_BASE + name;
     img.alt = '';
     img.loading = 'lazy';
+    img.draggable = false;
     cell.appendChild(img);
 
     // الحذف غير من العلامة، ماشي من الصورة كاملة — باش ما تتحذفش بالغلط
@@ -301,6 +310,8 @@ function thumbsFor(g) {
     strip.appendChild(cell);
   });
 
+  enableThumbGestures(strip, g);
+
   const add = document.createElement('button');
   add.type = 'button';
   add.className = 'thumb-add';
@@ -309,6 +320,158 @@ function thumbsFor(g) {
   strip.appendChild(add);
 
   return strip;
+}
+
+/**
+ * ضغطة خفيفة = معاينة الصورة كبيرة. ضغطة مطولة = سحبها لتبديل الترتيب.
+ * الصور المصغرة صغيرة بزاف باش تعرف شنو فيها، لهذا المعاينة ضرورية.
+ */
+const LONG_PRESS_MS = 420;
+const MOVE_SLOP = 10;
+
+function enableThumbGestures(strip, group) {
+  let cell = null;
+  let timer = null;
+  let startX = 0;
+  let dragging = false;
+
+  const cancelTimer = () => {
+    clearTimeout(timer);
+    timer = null;
+  };
+
+  strip.addEventListener('pointerdown', (e) => {
+    const target = e.target.closest('.thumb');
+    if (!target || e.target.closest('.thumb-del')) return;
+
+    cell = target;
+    startX = e.clientX;
+    dragging = false;
+
+    timer = setTimeout(() => {
+      dragging = true;
+      cell.classList.add('dragging');
+      // بلا هادشي الشريط كايتزحلق بدل ما الصورة تتسحب
+      strip.style.touchAction = 'none';
+      strip.setPointerCapture(e.pointerId);
+      if (navigator.vibrate) navigator.vibrate(25);
+    }, LONG_PRESS_MS);
+  });
+
+  strip.addEventListener('pointermove', (e) => {
+    if (!cell) return;
+
+    if (!dragging) {
+      if (Math.abs(e.clientX - startX) > MOVE_SLOP) cancelTimer();
+      return;
+    }
+
+    e.preventDefault();
+
+    const other = [...strip.querySelectorAll('.thumb')].find((c) => {
+      if (c === cell) return false;
+      const r = c.getBoundingClientRect();
+      return e.clientX >= r.left && e.clientX <= r.right;
+    });
+
+    if (!other) return;
+
+    // الترتيب فالـ DOM هو المرجع، وكانقراوه ملي يسالي السحب
+    const cells = [...strip.querySelectorAll('.thumb')];
+    if (cells.indexOf(cell) < cells.indexOf(other)) other.after(cell);
+    else other.before(cell);
+  });
+
+  const finish = () => {
+    cancelTimer();
+    if (!cell) return;
+
+    if (dragging) {
+      cell.classList.remove('dragging');
+      strip.style.touchAction = '';
+
+      const order = [...strip.querySelectorAll('.thumb')].map((c) => c.dataset.name);
+      const changed = order.join() !== (group.images || []).join();
+
+      cell = null;
+      dragging = false;
+
+      if (changed) {
+        group.images = order;
+        persistGroups();
+        toast('تبدل الترتيب');
+      }
+      return;
+    }
+
+    // ضغطة خفيفة
+    const name = cell.dataset.name;
+    cell = null;
+    openViewer(group.id, name);
+  };
+
+  strip.addEventListener('pointerup', finish);
+  strip.addEventListener('pointercancel', () => {
+    cancelTimer();
+    if (dragging) {
+      cell.classList.remove('dragging');
+      strip.style.touchAction = '';
+    }
+    cell = null;
+    dragging = false;
+  });
+}
+
+/* ---------------- معاينة الصورة ---------------- */
+
+let viewerGroup = null;
+let viewerIndex = 0;
+
+function openViewer(groupId, name) {
+  const g = groups.find((x) => x.id === groupId);
+  if (!g) return;
+
+  viewerGroup = g;
+  viewerIndex = (g.images || []).indexOf(name);
+  if (viewerIndex < 0) return;
+
+  $('viewer').classList.remove('hidden');
+  paintViewer();
+}
+
+function paintViewer() {
+  const images = viewerGroup?.images || [];
+
+  if (!images.length) return closeViewer();
+
+  viewerIndex = Math.min(Math.max(viewerIndex, 0), images.length - 1);
+
+  $('viewer-img').src = IMG_BASE + images[viewerIndex];
+  $('viewer-pos').textContent =
+    viewerGroup.name + ' — ' + (viewerIndex + 1) + ' من ' + images.length;
+
+  $('viewer-prev').disabled = viewerIndex === 0;
+  $('viewer-next').disabled = viewerIndex === images.length - 1;
+}
+
+function closeViewer() {
+  $('viewer').classList.add('hidden');
+  $('viewer-img').removeAttribute('src');
+  viewerGroup = null;
+}
+
+async function deleteFromViewer() {
+  const images = viewerGroup?.images || [];
+  const name = images[viewerIndex];
+  if (!name) return;
+
+  if (!(await ask('تحذف هاد الصورة من المجموعة؟'))) return;
+
+  viewerGroup.images = images.filter((n) => n !== name);
+  persistGroups();
+
+  if (viewerGroup.images.length) paintViewer();
+  else closeViewer();
 }
 
 async function removeImage(groupId, name) {
@@ -581,6 +744,12 @@ menuEl.addEventListener('click', async (e) => {
     toast('ترجعو للافتراضي');
   }
 });
+
+$('viewer-close').addEventListener('click', closeViewer);
+$('viewer-keep').addEventListener('click', closeViewer);
+$('viewer-del').addEventListener('click', deleteFromViewer);
+$('viewer-prev').addEventListener('click', () => { viewerIndex--; paintViewer(); });
+$('viewer-next').addEventListener('click', () => { viewerIndex++; paintViewer(); });
 
 $('confirm-yes').addEventListener('click', () => closeConfirm(true));
 $('confirm-no').addEventListener('click', () => closeConfirm(false));

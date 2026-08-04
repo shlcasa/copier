@@ -93,6 +93,25 @@
   </div>
 </div>
 
+<!-- معاينة الصورة بحجم كبير -->
+<div id="viewer" class="viewer hidden">
+  <div class="viewer-bar">
+    <span id="viewer-pos"></span>
+    <button id="viewer-close" class="icon-btn" aria-label="سد">✕</button>
+  </div>
+
+  <div class="viewer-stage">
+    <button id="viewer-prev" class="viewer-nav" aria-label="السابقة">›</button>
+    <img id="viewer-img" alt="">
+    <button id="viewer-next" class="viewer-nav" aria-label="التالية">‹</button>
+  </div>
+
+  <div class="viewer-actions">
+    <button id="viewer-keep" class="btn ghost">خليها</button>
+    <button id="viewer-del" class="btn danger">حذف الصورة</button>
+  </div>
+</div>
+
 <!-- تأكيد الحذف. ماشي confirm() ديال المتصفح حيت هادا كايرجع false
      مباشرة داخل WebView وكايخلي الحذف ما يوقعش أصلاً. -->
 <div id="confirm" class="sheet hidden">
