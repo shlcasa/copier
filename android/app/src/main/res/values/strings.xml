@@ -36,6 +36,9 @@
     <string name="restored">ترجعو %1$d عبارة و %2$d مجموعة ✅</string>
     <string name="restore_failed">الملف ماشي نسخة احتياطية صالحة</string>
 
+    <string name="replaced">الصورة تبدلات ✅</string>
+    <string name="replace_failed">ما قدرناش نقراو الصورة الجديدة</string>
+
     <string name="importing">كانزيدو %1$d صورة...</string>
     <string name="imported">تزادو %1$d صورة</string>
     <string name="imported_partial">تزادو %1$d من %2$d — بعض الصور ما تقراوش</string>

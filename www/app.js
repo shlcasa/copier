@@ -455,31 +455,38 @@ function enableThumbGestures(strip, group) {
 
 /* ---------------- معاينة الصورة ---------------- */
 
-let viewerGroup = null;
+// كانخزنو المعرّف ماشي الكائن، حيت اللائحة كتتعاود تتقرا بعد كل تعديل
+let viewerGroupId = null;
 let viewerIndex = 0;
+
+const viewerGroup = () => groups.find((x) => x.id === viewerGroupId) || null;
 
 function openViewer(groupId, name) {
   const g = groups.find((x) => x.id === groupId);
   if (!g) return;
 
-  viewerGroup = g;
-  viewerIndex = (g.images || []).indexOf(name);
-  if (viewerIndex < 0) return;
+  const index = (g.images || []).indexOf(name);
+  if (index < 0) return;
+
+  viewerGroupId = groupId;
+  viewerIndex = index;
 
   $('viewer').classList.remove('hidden');
   paintViewer();
 }
 
 function paintViewer() {
-  const images = viewerGroup?.images || [];
+  if (!viewerGroupId) return;
+
+  const g = viewerGroup();
+  const images = g?.images || [];
 
   if (!images.length) return closeViewer();
 
   viewerIndex = Math.min(Math.max(viewerIndex, 0), images.length - 1);
 
   $('viewer-img').src = IMG_BASE + images[viewerIndex];
-  $('viewer-pos').textContent =
-    viewerGroup.name + ' — ' + (viewerIndex + 1) + ' من ' + images.length;
+  $('viewer-pos').textContent = g.name + ' — ' + (viewerIndex + 1) + ' من ' + images.length;
 
   $('viewer-prev').disabled = viewerIndex === 0;
   $('viewer-next').disabled = viewerIndex === images.length - 1;
@@ -488,21 +495,30 @@ function paintViewer() {
 function closeViewer() {
   $('viewer').classList.add('hidden');
   $('viewer-img').removeAttribute('src');
-  viewerGroup = null;
+  viewerGroupId = null;
 }
 
 async function deleteFromViewer() {
-  const images = viewerGroup?.images || [];
-  const name = images[viewerIndex];
+  const g = viewerGroup();
+  const name = (g?.images || [])[viewerIndex];
   if (!name) return;
 
   if (!(await ask('تحذف هاد الصورة من المجموعة؟'))) return;
 
-  viewerGroup.images = images.filter((n) => n !== name);
+  g.images = g.images.filter((n) => n !== name);
   persistGroups();
 
-  if (viewerGroup.images.length) paintViewer();
+  if (g.images.length) paintViewer();
   else closeViewer();
+}
+
+/** كايفتح المنتقي، والصورة المختارة كتحل بلاصة هادي بنفس الترتيب. */
+function swapFromViewer() {
+  const g = viewerGroup();
+  const name = (g?.images || [])[viewerIndex];
+  if (!name || !NATIVE) return;
+
+  Android.replaceImage(g.id, name);
 }
 
 async function removeImage(groupId, name) {
@@ -783,6 +799,7 @@ menuEl.addEventListener('click', async (e) => {
 
 $('viewer-close').addEventListener('click', closeViewer);
 $('viewer-keep').addEventListener('click', closeViewer);
+$('viewer-swap').addEventListener('click', swapFromViewer);
 $('viewer-del').addEventListener('click', deleteFromViewer);
 $('viewer-prev').addEventListener('click', () => { viewerIndex--; paintViewer(); });
 $('viewer-next').addEventListener('click', () => { viewerIndex++; paintViewer(); });
@@ -804,6 +821,8 @@ window.reloadAll = () => {
   groups = groupStore.load();
   render();
   renderGroups();
+  // المعاينة إلا كانت محلولة خاصها توري الصورة الجديدة فنفس البلاصة
+  if (viewerGroupId) paintViewer();
 };
 
 // بعد ما يرجع المستخدم من إعدادات النظام، نعاودو نقراو الحالة.

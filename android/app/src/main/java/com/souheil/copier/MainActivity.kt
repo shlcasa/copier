@@ -33,6 +33,9 @@ class MainActivity : AppCompatActivity() {
     private val io = Executors.newSingleThreadExecutor()
     private var pendingGroupId: String? = null
 
+    /** (معرّف المجموعة، اسم الصورة اللي غادي تتبدل) */
+    private var pendingReplace: Pair<String, String>? = null
+
     /**
      * الصور المخزنة داخلياً كايتقدمو تحت https بدل file:// —
      * بهاد الطريقة الواجهة كتقدر تعرضهم عادي بلا ما نفتحو الوصول للملفات.
@@ -50,15 +53,24 @@ class MainActivity : AppCompatActivity() {
 
     private val picker =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val groupId = pendingGroupId ?: return@registerForActivityResult
+            val addTo = pendingGroupId
+            val swap = pendingReplace
             pendingGroupId = null
+            pendingReplace = null
+
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
             val uris = extractUris(result.data)
             if (uris.isEmpty()) return@registerForActivityResult
 
-            Toast.makeText(this, getString(R.string.importing, uris.size), Toast.LENGTH_SHORT).show()
-            importInBackground(groupId, uris)
+            when {
+                swap != null -> replaceInBackground(swap.first, swap.second, uris.first())
+
+                addTo != null -> {
+                    Toast.makeText(this, getString(R.string.importing, uris.size), Toast.LENGTH_SHORT).show()
+                    importInBackground(addTo, uris)
+                }
+            }
         }
 
     private val exporter =
@@ -128,21 +140,29 @@ class MainActivity : AppCompatActivity() {
 
     fun pickImagesFor(groupId: String) {
         pendingGroupId = groupId
-        picker.launch(pickIntent())
+        pendingReplace = null
+        picker.launch(pickIntent(multiple = true))
     }
 
-    private fun pickIntent(): Intent =
+    fun replaceImageIn(groupId: String, oldName: String) {
+        pendingGroupId = null
+        pendingReplace = groupId to oldName
+        picker.launch(pickIntent(multiple = false))
+    }
+
+    private fun pickIntent(multiple: Boolean): Intent =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // منتقي الصور ديال النظام — ما كايحتاجش إذن الوصول للمعرض
             Intent(MediaStore.ACTION_PICK_IMAGES).apply {
                 type = "image/*"
-                putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MAX_PICK)
+                // EXTRA_PICK_IMAGES_MAX خاصو يكون أكبر من 1؛ بلاه كايولي الاختيار وحداني
+                if (multiple) putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MAX_PICK)
             }
         } else {
             Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 type = "image/*"
                 addCategory(Intent.CATEGORY_OPENABLE)
-                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                if (multiple) putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             }
         }
 
@@ -201,6 +221,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loadBackup() = importer.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+
+    private fun replaceInBackground(groupId: String, oldName: String, uri: Uri) {
+        io.execute {
+            val newName = ImageStore.importImage(this, uri)
+
+            runOnUiThread {
+                if (newName == null) {
+                    Toast.makeText(this, R.string.replace_failed, Toast.LENGTH_SHORT).show()
+                    return@runOnUiThread
+                }
+
+                ImageStore.replaceImage(this, groupId, oldName, newName)
+                Toast.makeText(this, R.string.replaced, Toast.LENGTH_SHORT).show()
+                refreshUi()
+            }
+        }
+    }
 
     fun refreshUi() {
         web.evaluateJavascript("window.reloadAll && window.reloadAll();", null)

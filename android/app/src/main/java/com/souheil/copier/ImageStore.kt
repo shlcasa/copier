@@ -84,6 +84,25 @@ object ImageStore {
         }
     }
 
+    /** كايبدل صورة بأخرى فنفس البلاصة، وكايمسح القديمة حيت ما بقاتش مستعملة. */
+    fun replaceImage(c: Context, groupId: String, oldName: String, newName: String) {
+        val arr = try { JSONArray(rawJson(c)) } catch (e: Exception) { return }
+
+        for (i in 0 until arr.length()) {
+            val group = arr.optJSONObject(i) ?: continue
+            if (group.optString("id") != groupId) continue
+
+            val images = group.optJSONArray("images") ?: return
+            for (j in 0 until images.length()) {
+                if (images.optString(j) != oldName) continue
+
+                images.put(j, newName)
+                save(c, arr.toString())
+                return
+            }
+        }
+    }
+
     /* ---------------- استيراد الصور ---------------- */
 
     /** كاينسخ الصورة لداخل التطبيق بعد ما يصغّرها ويصحح الدوران. كايرجع اسم الملف. */

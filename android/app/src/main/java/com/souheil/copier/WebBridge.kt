@@ -50,6 +50,12 @@ class WebBridge(private val activity: Activity) {
         (activity as? MainActivity)?.pickImagesFor(groupId)
     }
 
+    /** كايبدل صورة بأخرى فنفس البلاصة من الترتيب. */
+    @JavascriptInterface
+    fun replaceImage(groupId: String, oldName: String) = onMain {
+        (activity as? MainActivity)?.replaceImageIn(groupId, oldName)
+    }
+
     /** كايفتح لوحة المشاركة والصور مرفقة. */
     @JavascriptInterface
     fun sendGroup(groupId: String) = onMain {
