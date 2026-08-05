@@ -512,6 +512,77 @@ async function deleteFromViewer() {
   else closeViewer();
 }
 
+/**
+ * التمرير بالصبع بين الصور. الاتجاه ماشي لليمين حيت الواجهة عربية:
+ * السحب لليسار = التالية (نفس جهة زر ‹)، والسحب لليمين = السابقة.
+ */
+const SWIPE_MIN = 45;
+
+function enableViewerSwipe() {
+  const stage = document.querySelector('.viewer-stage');
+  const img = $('viewer-img');
+
+  let startX = 0;
+  let startY = 0;
+  let dx = 0;
+  let active = false;
+
+  stage.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches.length !== 1) return (active = false);
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dx = 0;
+      active = true;
+      img.style.transition = 'none';
+    },
+    { passive: true }
+  );
+
+  stage.addEventListener(
+    'touchmove',
+    (e) => {
+      if (!active) return;
+
+      const t = e.touches[0];
+      const dy = t.clientY - startY;
+      dx = t.clientX - startX;
+
+      // حركة عمودية = ماشي تمرير بين الصور
+      if (Math.abs(dy) > Math.abs(dx) + 20) return (active = false);
+
+      img.style.transform = 'translateX(' + dx + 'px)';
+      img.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 380));
+    },
+    { passive: true }
+  );
+
+  const release = () => {
+    if (!active) return reset();
+    active = false;
+
+    const images = viewerGroup()?.images || [];
+    const target = dx < 0 ? viewerIndex + 1 : viewerIndex - 1;
+
+    if (Math.abs(dx) > SWIPE_MIN && target >= 0 && target < images.length) {
+      viewerIndex = target;
+      paintViewer();
+    }
+
+    reset();
+  };
+
+  function reset() {
+    img.style.transition = 'transform .16s ease-out, opacity .16s ease-out';
+    img.style.transform = '';
+    img.style.opacity = '';
+  }
+
+  stage.addEventListener('touchend', release);
+  stage.addEventListener('touchcancel', release);
+}
+
 /** كايفتح المنتقي، والصورة المختارة كتحل بلاصة هادي بنفس الترتيب. */
 function swapFromViewer() {
   const g = viewerGroup();
@@ -835,6 +906,7 @@ if (!NATIVE && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
+enableViewerSwipe();
 switchTab('phrases');
 renderSetup();
 render();

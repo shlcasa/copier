@@ -280,6 +280,10 @@ body {
   justify-content: center;
   min-height: 0;
   padding: 4px 8px;
+  /* ما كاينش تزحلاق هنا، فكانمنعو حركات المتصفح باش التمرير بالصبع يخدم نظيف */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .viewer-stage img {
@@ -487,6 +491,9 @@ body {
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.ghost { background: var(--surface-2); color: var(--text); }
 .btn.danger { background: var(--danger); color: #2a0409; }
+
+/* خاصها تكون فوق المعاينة (z-index 60)، وإلا كتبان وراها وما كايبانش الحذف */
+#confirm { z-index: 70; }
 
 .confirm-text {
   margin: 0 0 4px;
